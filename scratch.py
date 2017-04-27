@@ -6,7 +6,7 @@ import pprint
 
 game_pane_x_size, game_pane_y_size = 8, 8
 game_pane_size = game_pane_x_size * game_pane_y_size
-gem_types = [1, 2, 3, 4]
+gem_types = ['A', 'B', 'C', 'D', 'E', 'F']
 blank = 0
 
 
@@ -23,7 +23,7 @@ class game_pane:
         # randomly generate a game pane
         return [[random.choice(self.gem_types) for i in range(self.game_pane_y_size)] for j in range(self.game_pane_x_size)]
 
-    # The Game Pane is designed and printed like
+    # The Game Pane is designed like this
     # [[2, 4, 1, 1, 1, 3, 3, 1],
     #  [3, 3, 4, 4, 1, 1, 4, 3],
     #  [4, 4, 1, 2, 3, 4, 2, 3],
@@ -35,12 +35,14 @@ class game_pane:
 
     def print_current_pane(self):
         pprint.pprint(self.pane)
+        return 0
 
-    def __check_stage(self):
+    def __check_stage(self, pane=None):
         # Check the current game pane to see if there are any gems that should be cleared.
         # Returns a set, which contains tuples of coordinates of gems that should be cleared.
         # If no gem needs to be cleared, returns an empty set.
-        pane = self.pane
+        if not pane:
+            pane = self.pane
         gems_to_clear = set()
         # Check column (y) direction
         for x in range(0, self.game_pane_x_size):
@@ -57,13 +59,11 @@ class game_pane:
         return gems_to_clear
 
     def __gem_fall_algo(self, gem_column):
-        # Returns a falled column of gems
-        blank = self.blank
-        old_column = gem_column
-        new_column = [blank for _ in range(len(old_column))]
+        # Make gems in gem_column to fall
+        new_column = [self.blank for _ in range(len(gem_column))]
         y = 0
-        for gem in old_column:
-            if gem != blank:
+        for gem in gem_column:
+            if gem != self.blank:
                 new_column[y] = gem
                 y += 1
             else:
@@ -71,25 +71,19 @@ class game_pane:
         return new_column
 
     def __gem_fill_column_algo(self, gem_column):
-        # Fills all blanks with randomly chosen gems.
-        blank = self.blank
-        old_column = gem_column
-        new_column = gem_column
-        for y in range(len(old_column)):
-            if old_column[y] == blank:
-                new_column[y] = random.choice(gem_types)
+        # Fills all blanks in gem_column with randomly chosen gems.
+        for y in range(len(gem_column)):
+            if gem_column[y] == self.blank:
+                gem_column[y] = random.choice(gem_types)
             else:
                 pass
-        return new_column
+        return gem_column
 
-    def __construct_gem_falled_and_filled_pane(self):
+    def __gem_fall_and_fill_pane(self):
         # Construct new pane after the stage is cleared
-        old_pane = self.pane
-        new_pane = self.pane
         for x in range(0, self.game_pane_x_size):
-            new_pane[x] = self.__gem_fill_column_algo(
-                self.__gem_fall_algo(old_pane[x]))
-        self.pane = new_pane
+            self.pane[x] = self.__gem_fill_column_algo(self.__gem_fall_algo(self.pane[x]))
+        return 0
 
     def clear_stage(self):
         # Recursively reconstruct current pane after one move
@@ -98,13 +92,46 @@ class game_pane:
             print(gems_to_clear)
             for gem_x, gem_y in gems_to_clear:
                 self.pane[gem_x][gem_y] = self.blank
-            self.__construct_gem_falled_and_filled_pane()
+            self.__gem_fall_and_fill_pane()
             self.clear_stage()
         else:
             pass
+        return 0
+
+    def __exchange(self, gem1, gem2, pane=None):
+        if not pane:
+            pane = self.pane
+        pane[gem2[0]][gem2[1]], pane[gem1[0]][gem1[1]] = pane[gem1[0]][gem1[1]], pane[gem2[0]][gem2[1]]
+        return 0
+
+    def exchange(self, gem1, gem2):
+        if (abs(gem1[0] - gem2[0]) == 1 and gem1[1] == gem2[1]) or (abs(gem1[1] - gem2[1]) == 1 and gem1[0] == gem2[0]):
+            new_pane = self.pane[:]
+            self.__exchange(gem1, gem2, new_pane)
+            if self.__check_stage(new_pane):
+                self.pane = new_pane
+                return 0
+            else:
+                return 1
+        else:
+            return 1
 
 
 my_game_pane = game_pane(gem_types, blank, game_pane_x_size, game_pane_y_size)
 my_game_pane.print_current_pane()
 my_game_pane.clear_stage()
 my_game_pane.print_current_pane()
+
+while True:
+    if my_game_pane.exchange(list(map(int, input().split())),list(map(int, input().split()))):
+        print('Failure')
+    else:
+        my_game_pane.clear_stage()
+        my_game_pane.print_current_pane()
+
+# my_game_pane = game_pane(gem_types, blank, game_pane_x_size, game_pane_y_size)
+# my_game_pane.pane = [[0 for i in range(game_pane_y_size)] for j in range(game_pane_x_size)]
+# my_game_pane.print_current_pane()
+#
+# my_game_pane.pane[2][4] = 1
+# my_game_pane.print_current_pane()
