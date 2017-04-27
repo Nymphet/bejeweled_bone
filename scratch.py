@@ -6,7 +6,7 @@ import pprint
 
 game_pane_x_size, game_pane_y_size = 8, 8
 game_pane_size = game_pane_x_size * game_pane_y_size
-gem_types = ['A', 'B', 'C', 'D', 'E', 'F']
+gem_types = ['A', 'B']
 blank = 0
 
 
@@ -88,12 +88,12 @@ class game_pane:
     def clear_stage(self):
         # Recursively reconstruct current pane after one move
         gems_to_clear = self.__check_stage()
-        if gems_to_clear:
+        while gems_to_clear:
             print(gems_to_clear)
             for gem_x, gem_y in gems_to_clear:
                 self.pane[gem_x][gem_y] = self.blank
             self.__gem_fall_and_fill_pane()
-            self.clear_stage()
+            gems_to_clear = self.__check_stage()
         else:
             pass
         return 0
